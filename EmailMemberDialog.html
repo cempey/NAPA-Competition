@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; padding: 10px 16px; }
+    h3 { margin-top: 0; }
+    select { width: 100%; padding: 6px; font-size: 13px; margin-top: 4px; }
+    .buttons { text-align: right; margin-top: 16px; }
+    button { padding: 6px 14px; margin-left: 8px; }
+    #statusMsg { min-height: 18px; margin-top: 8px; }
+    .empty-note { color: #666; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h3>Email One Member</h3>
+
+  <? if (members.length === 0) { ?>
+    <p class="empty-note">No members with entries were found. Please import CSV data first.</p>
+    <div class="buttons">
+      <button type="button" onclick="google.script.host.close()">Close</button>
+    </div>
+  <? } else { ?>
+    <label for="memberSelect">Select a member:</label>
+    <select id="memberSelect">
+      <? for (var i = 0; i < members.length; i++) { ?>
+        <option value="<?= members[i].key ?>"><?= members[i].fullName ?> (<?= members[i].level ?>)</option>
+      <? } ?>
+    </select>
+
+    <div id="statusMsg"></div>
+
+    <div class="buttons">
+      <button type="button" onclick="google.script.host.close()">Cancel</button>
+      <button type="button" id="sendBtn" onclick="sendEmail()">Send Email</button>
+    </div>
+  <? } ?>
+
+  <script>
+    function sendEmail() {
+      const select = document.getElementById('memberSelect');
+      const key = select.value;
+      const statusEl = document.getElementById('statusMsg');
+      const btn = document.getElementById('sendBtn');
+
+      btn.disabled = true;
+      statusEl.style.color = '#666';
+      statusEl.innerText = 'Sending...';
+
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          statusEl.style.color = '#0a0';
+          statusEl.innerText = msg;
+          setTimeout(function() { google.script.host.close(); }, 1500);
+        })
+        .withFailureHandler(function(err) {
+          statusEl.style.color = '#CC0000';
+          statusEl.innerText = err.message || String(err);
+          btn.disabled = false;
+        })
+        .sendEmailToSelectedMember(key);
+    }
+  </script>
+</body>
+</html>

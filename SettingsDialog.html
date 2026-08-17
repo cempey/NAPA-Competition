@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; padding: 10px 16px; }
+    h3 { margin-top: 0; }
+    fieldset { border: 1px solid #ccc; border-radius: 6px; margin-bottom: 14px; padding: 8px 12px; }
+    legend { font-weight: bold; padding: 0 4px; }
+    label { display: block; margin: 4px 0; cursor: pointer; }
+    input[type="text"] { width: 100px; padding: 4px; font-size: 13px; }
+    .buttons { text-align: right; margin-top: 16px; }
+    button { padding: 6px 14px; margin-left: 8px; }
+    #errorMsg { color: #CC0000; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <h3><? if (mode == 'setup') { ?>Competition Setup<? } else { ?>Change Competition Settings<? } ?></h3>
+
+  <form id="settingsForm">
+    <fieldset>
+      <legend>Colour or Monochrome</legend>
+      <label><input type="radio" name="comp" value="C" <?= currentComp == 'C' ? 'checked' : '' ?>> Colour</label>
+      <label><input type="radio" name="comp" value="M" <?= currentComp == 'M' ? 'checked' : '' ?>> Monochrome</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Competition Format</legend>
+      <label><input type="radio" name="format" value="Print" <?= currentFormat == 'Print' ? 'checked' : '' ?>> Print</label>
+      <label><input type="radio" name="format" value="Digital" <?= currentFormat == 'Digital' ? 'checked' : '' ?>> Digital</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Starting Year</legend>
+      <label>Enter the 4-digit starting year (e.g. 2026):</label>
+      <input type="text" id="startYear" maxlength="4" value="<?= currentYear ?>" placeholder="2026">
+    </fieldset>
+
+    <div id="errorMsg"></div>
+
+    <div class="buttons">
+      <button type="button" onclick="google.script.host.close()">Cancel</button>
+      <button type="button" onclick="submitForm()">OK</button>
+    </div>
+  </form>
+
+  <input type="hidden" id="mode" value="<?= mode ?>">
+
+  <script>
+    function submitForm() {
+      const form = document.getElementById('settingsForm');
+      const comp = form.comp.value;
+      const format = form.format.value;
+      const startYear = document.getElementById('startYear').value.trim();
+      const mode = document.getElementById('mode').value;
+      const errEl = document.getElementById('errorMsg');
+
+      if (!comp) { errEl.innerText = 'Please select Colour or Monochrome.'; return; }
+      if (!format) { errEl.innerText = 'Please select Print or Digital.'; return; }
+      if (!/^\d{4}$/.test(startYear)) { errEl.innerText = 'Starting year must be exactly 4 digits.'; return; }
+
+      errEl.style.color = '#666';
+      errEl.innerText = 'Saving...';
+
+      google.script.run
+        .withSuccessHandler(function() { google.script.host.close(); })
+        .withFailureHandler(function(err) {
+          errEl.style.color = '#CC0000';
+          errEl.innerText = err.message || String(err);
+        })
+        .processSettingsForm(comp, format, startYear, mode);
+    }
+  </script>
+</body>
+</html>
